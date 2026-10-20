@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Voice Light</title>
+</head>
+<body>
+  <h1>My Voice Light</h1>
+  <button id="listen">🎤 Listen</button>
+  <p id="message">Press Listen, then say: “light on”, “light off”, or “light blink”.</p>
+
+  <script>
+    const message = document.getElementById("message");
+    const lightAddress = "http://192.168.1.12";
+
+    document.getElementById("listen").onclick = () => {
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+        message.textContent = "This browser does not support voice recognition. Use Chrome.";
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        message.textContent = "Listening… speak now.";
+      };
+
+      recognition.onerror = (event) => {
+        message.textContent = "Voice error: " + event.error;
+      };
+
+      recognition.onresult = (event) => {
+        const words = event.results[0][0].transcript.toLowerCase();
+        message.textContent = "You said: " + words;
+
+        let command = "";
+        if (words.includes("off")) command = "/off";
+        else if (words.includes("blink")) command = "/blink";
+        else if (words.includes("glow")) command = "/glow";
+        else if (words.includes("candle")) command = "/candle";
+        else if (words.includes("on") || words.includes("steady")) command = "/steady";
+
+        if (command) {
+          fetch(lightAddress + command, { mode: "no-cors" });
+          message.textContent += " — sending command to the light.";
+        } else {
+          message.textContent += " — try “light on”, “light off”, or “light blink”.";
+        }
+      };
+
+      recognition.start();
+    };
+  </script>
+</body>
+</html>
